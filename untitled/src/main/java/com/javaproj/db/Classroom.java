@@ -1,5 +1,6 @@
 package com.javaproj.db;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.util.Set;
 import java.util.HashSet;
@@ -27,8 +28,13 @@ public class Classroom {
     @Column(name = "building", length = 100)
     private String building;
 
+    // FIXED:
+    /*In a bidirectional relationship, @JsonManagedReference is typically used on the "parent" side
+     (the "one" in a one-to-many, or the forward part of the reference that gets serialized),
+     and @JsonBackReference is on the "child" side (the "many" in a one-to-many).
+     */
     @OneToMany(mappedBy = "classroom", fetch = FetchType.LAZY)
-    @JsonBackReference("schedule-classroom")
+    @JsonManagedReference("schedule-classroom")
     private Set<Schedule> schedules = new HashSet<>();
 
     public Classroom() {

@@ -30,7 +30,7 @@ public class Schedule {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id", nullable = false)
-    @JsonManagedReference("schedule-classroom")
+    @JsonBackReference("schedule-classroom")
     private Classroom classroom;
 
     @Column(name = "day_of_week", nullable = false, length = 10)

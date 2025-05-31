@@ -1,0 +1,43 @@
+.container {
+  margin: 20px;
+}
+
+.addButton {
+  display: inline-block;
+  margin-bottom: 20px;
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+}
+
+.addButton:hover {
+  background-color: #0056b3;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.table th, .table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.table th {
+  background-color: #f2f2f2;
+}
+
+.actionLink {
+  margin-right: 10px;
+  color: #007bff;
+  text-decoration: none;
+}
+
+.actionLink:hover {
+  text-decoration: underline;
+}
