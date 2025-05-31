@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
@@ -17,7 +18,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
     List<Schedule> findByDayOfWeekAndSemesterAndAcademicYear(String dayOfWeek, String semester, String academicYear);
     List<Schedule> findByProfessorAndSemesterAndAcademicYear(Professor professor, String semester, String academicYear);
     List<Schedule> findByClassroomAndSemesterAndAcademicYear(Classroom classroom, String semester, String academicYear);
-
 
     @Query("SELECT s FROM Schedule s WHERE s.classroom.roomId = :roomId " +
             "AND s.dayOfWeek = :dayOfWeek " +
@@ -45,4 +45,8 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
 
     @Query("SELECT s FROM Schedule s WHERE s.course.courseId = :courseId AND s.semester = :semester AND s.academicYear = :academicYear")
     List<Schedule> findByCourseIdAndSemesterAndAcademicYear(@Param("courseId") Integer courseId, @Param("semester") String semester, @Param("academicYear") String academicYear);
+
+    Optional<Schedule> findByClassroomAndDayOfWeekAndStartTimeAndSemesterAndAcademicYear(
+            Classroom classroom, String dayOfWeek, LocalTime startTime, String semester, String academicYear
+    );
 }

@@ -1,11 +1,5 @@
 package com.javaproj;
 
-//
-//
-// TEST CLASS GENERATED WITH AI
-//
-//
-
 import com.javaproj.db.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,170 +34,153 @@ public class UniversitySchedulerApplication implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        log.info("---- STARTING DATABASE TESTS ----");
+        log.info("---- STARTING DATABASE SETUP/TEST ----");
 
-        // --- Test Classroom ---
-        log.info("---- TESTING CLASSROOMS ----");
-        Classroom c1 = new Classroom();
-        c1.setRoomNumber("C101");
-        c1.setCapacity(50);
-        c1.setBuilding("Main Building");
-        c1.setHasProjector(true);
-        classroomRepository.save(c1);
-
-        Classroom c2 = new Classroom();
-        c2.setRoomNumber("LAB2B");
-        c2.setCapacity(30);
-        c2.setBuilding("Tech Wing");
-        c2.setHasProjector(false);
-        classroomRepository.save(c2);
-
-        log.info("Classrooms found with findAll():");
-        classroomRepository.findAll().forEach(classroom -> log.info(classroom.getRoomNumber()));
-        Optional<Classroom> foundC1 = classroomRepository.findByRoomNumber("C101");
-        foundC1.ifPresent(value -> log.info("Found C101: " + value.getBuilding()));
-
-
-        // --- Test Professor ---
-        log.info("---- TESTING PROFESSORS ----");
-        Professor p1 = new Professor();
-        p1.setFirstName("John");
-        p1.setLastName("Doe");
-        p1.setEmail("john.doe@example.com");
-        p1.setDepartment("Computer Science");
-        p1.setOffice("A305");
-        professorRepository.save(p1);
-
-        Professor p2 = new Professor();
-        p2.setFirstName("Jane");
-        p2.setLastName("Smith");
-        p2.setEmail("jane.smith@example.com");
-        p2.setDepartment("Mathematics");
-        p2.setOffice("B102");
-        professorRepository.save(p2);
-
-        log.info("Professors found with findAll():");
-        professorRepository.findAll().forEach(prof -> log.info(prof.getFirstName() + " " + prof.getLastName()));
-        Optional<Professor> foundP1 = professorRepository.findByEmail("john.doe@example.com");
-        foundP1.ifPresent(value -> log.info("Found John Doe, Department: " + value.getDepartment()));
-
-
-        // --- Test Course ---
-        log.info("---- TESTING COURSES ----");
-        Course courseCS101 = new Course();
-        courseCS101.setCourseCode("CS101");
-        courseCS101.setCourseName("Introduction to Programming");
-        courseCS101.setCredits(4);
-        courseCS101.setDepartment("Computer Science");
-        courseCS101.setDescription("Fundamental programming concepts.");
-        courseRepository.save(courseCS101);
-
-        Course courseMA202 = new Course();
-        courseMA202.setCourseCode("MA202");
-        courseMA202.setCourseName("Calculus II");
-        courseMA202.setCredits(3);
-        courseMA202.setDepartment("Mathematics");
-        courseMA202.setDescription("Advanced calculus topics.");
-        courseRepository.save(courseMA202);
-
-        log.info("Courses found with findAll():");
-        courseRepository.findAll().forEach(course -> {
-            log.info(course.getCourseCode() + ": " + course.getCourseName() + " (Desc: " + course.getDescription() + ")");
+        log.info("---- PROCESSING CLASSROOMS ----");
+        Classroom c1 = classroomRepository.findByRoomNumber("C101").orElseGet(() -> {
+            Classroom newC1 = new Classroom();
+            newC1.setRoomNumber("C101");
+            newC1.setCapacity(50);
+            newC1.setBuilding("Main Building");
+            newC1.setHasProjector(true);
+            log.info("Creating Classroom C101");
+            return classroomRepository.save(newC1);
         });
+        log.info("Using Classroom C101: ID {}", c1.getRoomId());
 
-        List<Course> csCourses = courseRepository.findByDepartment("Computer Science");
-        log.info("Computer Science courses:");
-        csCourses.forEach(course -> {
-            log.info(course.getCourseName() + " Description: " + course.getDescription());
+        Classroom c2 = classroomRepository.findByRoomNumber("LAB2B").orElseGet(() -> {
+            Classroom newC2 = new Classroom();
+            newC2.setRoomNumber("LAB2B");
+            newC2.setCapacity(30);
+            newC2.setBuilding("Tech Wing");
+            newC2.setHasProjector(false);
+            log.info("Creating Classroom LAB2B");
+            return classroomRepository.save(newC2);
         });
+        log.info("Using Classroom LAB2B: ID {}", c2.getRoomId());
 
+        log.info("---- PROCESSING PROFESSORS ----");
+        Professor p1 = professorRepository.findByEmail("john.doe@example.com").orElseGet(() -> {
+            Professor newP1 = new Professor();
+            newP1.setFirstName("John");
+            newP1.setLastName("Doe");
+            newP1.setEmail("john.doe@example.com");
+            newP1.setDepartment("Computer Science");
+            newP1.setOffice("A305");
+            log.info("Creating Professor John Doe");
+            return professorRepository.save(newP1);
+        });
+        log.info("Using Professor John Doe: ID {}", p1.getProfessorId());
 
-        // --- Test Student ---
-        log.info("---- TESTING STUDENTS ----");
-        Student s1 = new Student();
-        s1.setFirstName("Alice");
-        s1.setLastName("Wonderland");
-        s1.setEmail("alice.w@example.com");
-        s1.setMajor("Computer Science");
-        s1.setEnrollmentDate(LocalDate.now().minusYears(1));
-        studentRepository.save(s1);
+        Professor p2 = professorRepository.findByEmail("jane.smith@example.com").orElseGet(() -> {
+            Professor newP2 = new Professor();
+            newP2.setFirstName("Jane");
+            newP2.setLastName("Smith");
+            newP2.setEmail("jane.smith@example.com");
+            newP2.setDepartment("Mathematics");
+            newP2.setOffice("B102");
+            log.info("Creating Professor Jane Smith");
+            return professorRepository.save(newP2);
+        });
+        log.info("Using Professor Jane Smith: ID {}", p2.getProfessorId());
 
-        Student s2 = new Student();
-        s2.setFirstName("Bob");
-        s2.setLastName("The Builder");
-        s2.setEmail("bob.b@example.com");
-        s2.setMajor("Engineering");
-        s2.setEnrollmentDate(LocalDate.now().minusMonths(6));
-        studentRepository.save(s2);
+        log.info("---- PROCESSING COURSES ----");
+        Course courseCS101 = courseRepository.findByCourseCode("CS101").orElseGet(() -> {
+            Course newCourse = new Course();
+            newCourse.setCourseCode("CS101");
+            newCourse.setCourseName("Introduction to Programming");
+            newCourse.setCredits(4);
+            newCourse.setDepartment("Computer Science");
+            newCourse.setDescription("Fundamental programming concepts.");
+            log.info("Creating Course CS101");
+            return courseRepository.save(newCourse);
+        });
+        log.info("Using Course CS101: ID {}", courseCS101.getCourseId());
 
-        log.info("Students found with findAll():");
-        studentRepository.findAll().forEach(student -> log.info(student.getFirstName() + " " + student.getLastName()));
-        Optional<Student> foundS1 = studentRepository.findByEmail("alice.w@example.com");
-        foundS1.ifPresent(value -> log.info("Found Alice, Major: " + value.getMajor()));
+        Course courseMA202 = courseRepository.findByCourseCode("MA202").orElseGet(() -> {
+            Course newCourse = new Course();
+            newCourse.setCourseCode("MA202");
+            newCourse.setCourseName("Calculus II");
+            newCourse.setCredits(3);
+            newCourse.setDepartment("Mathematics");
+            newCourse.setDescription("Advanced calculus topics.");
+            log.info("Creating Course MA202");
+            return courseRepository.save(newCourse);
+        });
+        log.info("Using Course MA202: ID {}", courseMA202.getCourseId());
 
+        log.info("---- PROCESSING STUDENTS ----");
+        Student s1 = studentRepository.findByEmail("alice.w@example.com").orElseGet(() -> {
+            Student newS1 = new Student();
+            newS1.setFirstName("Alice");
+            newS1.setLastName("Wonderland");
+            newS1.setEmail("alice.w@example.com");
+            newS1.setMajor("Computer Science");
+            newS1.setEnrollmentDate(LocalDate.now().minusYears(1));
+            log.info("Creating Student Alice Wonderland");
+            return studentRepository.save(newS1);
+        });
+        log.info("Using Student Alice Wonderland: ID {}", s1.getStudentId());
 
-        // --- Test Schedule ---
-        log.info("---- TESTING SCHEDULE ----");
-        Classroom managedC1_schedule = classroomRepository.findByRoomNumber("C101").orElse(null);
-        Professor managedP1_schedule = professorRepository.findByEmail("john.doe@example.com").orElse(null);
-        Course managedCourseCS101_schedule = courseRepository.findByCourseCode("CS101").orElse(null);
+        Student s2 = studentRepository.findByEmail("bob.b@example.com").orElseGet(() -> {
+            Student newS2 = new Student();
+            newS2.setFirstName("Bob");
+            newS2.setLastName("The Builder");
+            newS2.setEmail("bob.b@example.com");
+            newS2.setMajor("Engineering");
+            newS2.setEnrollmentDate(LocalDate.now().minusMonths(6));
+            log.info("Creating Student Bob The Builder");
+            return studentRepository.save(newS2);
+        });
+        log.info("Using Student Bob The Builder: ID {}", s2.getStudentId());
 
-        if (managedC1_schedule != null && managedP1_schedule != null && managedCourseCS101_schedule != null) {
-            Schedule sch1 = new Schedule();
-            sch1.setCourse(managedCourseCS101_schedule);
-            sch1.setProfessor(managedP1_schedule);
-            sch1.setClassroom(managedC1_schedule);
-            sch1.setDayOfWeek("Luni");
-            sch1.setStartTime(LocalTime.of(9, 0));
-            sch1.setEndTime(LocalTime.of(11, 0));
-            sch1.setSemester("Toamna 2024");
-            sch1.setAcademicYear("2024-2025");
-            scheduleRepository.save(sch1);
-            log.info("Saved Schedule ID: " + sch1.getScheduleId());
+        log.info("---- PROCESSING SCHEDULE ----");
+        final String scheduleDay = "Luni";
+        final LocalTime scheduleStartTime = LocalTime.of(9, 0);
+        final LocalTime scheduleEndTime = LocalTime.of(11, 0);
+        final String scheduleSemester = "Toamna 2024";
+        final String scheduleAcademicYear = "2024-2025";
 
-            List<Schedule> conflicts = scheduleRepository.findRoomConflicts(
-                    managedC1_schedule.getRoomId(), "Luni", "Toamna 2024", "2024-2025",
-                    LocalTime.of(10,0), LocalTime.of(12,0)
-            );
-            log.info("Potential room conflicts for C101 Luni 10:00-12:00: " + (conflicts != null ? conflicts.size() : "0"));
-            if (conflicts != null) {
-                conflicts.forEach(c -> log.info("Conflict Schedule ID: " + c.getScheduleId() + " for course " + c.getCourse().getCourseCode()));
-            }
+        Schedule sch1 = scheduleRepository.findByClassroomAndDayOfWeekAndStartTimeAndSemesterAndAcademicYear(
+                        c1, scheduleDay, scheduleStartTime, scheduleSemester, scheduleAcademicYear)
+                .orElseGet(() -> {
+                    Schedule newSch = new Schedule();
+                    newSch.setCourse(courseCS101);
+                    newSch.setProfessor(p1);
+                    newSch.setClassroom(c1);
+                    newSch.setDayOfWeek(scheduleDay);
+                    newSch.setStartTime(scheduleStartTime);
+                    newSch.setEndTime(scheduleEndTime);
+                    newSch.setSemester(scheduleSemester);
+                    newSch.setAcademicYear(scheduleAcademicYear);
+                    log.info("Creating Schedule for CS101 with Prof. Doe in C101 on Luni 9:00");
+                    return scheduleRepository.save(newSch);
+                });
+        log.info("Using Schedule ID: {}", sch1.getScheduleId());
 
-            // --- Test Enrollment (Reordered) ---
-            log.info("---- TESTING ENROLLMENT ----");
-            Student managedS1_enroll = studentRepository.findByEmail("alice.w@example.com").orElse(null);
-            Schedule managedSch1_enroll = sch1;
+        List<Schedule> conflicts = scheduleRepository.findRoomConflicts(
+                c1.getRoomId(), scheduleDay, scheduleSemester, scheduleAcademicYear,
+                LocalTime.of(10,0), LocalTime.of(12,0)
+        );
+        log.info("Potential room conflicts for C101 Luni 10:00-12:00: {}", conflicts.size());
+        conflicts.forEach(cfl -> log.info("Conflict Schedule ID: {} for course {}", cfl.getScheduleId(), cfl.getCourse().getCourseCode()));
 
-            if (managedS1_enroll != null && managedSch1_enroll != null) {
-                Enrollment e1 = new Enrollment();
-                e1.setStudent(managedS1_enroll);
-                e1.setSchedule(managedSch1_enroll);
-                e1.setEnrollmentDate(LocalDate.now());
-                e1.setGrade(new BigDecimal("95.50"));
-                enrollmentRepository.save(e1);
-                log.info("Saved Enrollment ID: " + e1.getEnrollmentId() + " for student " + e1.getStudent().getFirstName());
+        log.info("---- PROCESSING ENROLLMENT ----");
+        Enrollment e1 = enrollmentRepository.findByStudentAndSchedule(s1, sch1).orElseGet(() -> {
+            Enrollment newE = new Enrollment();
+            newE.setStudent(s1);
+            newE.setSchedule(sch1);
+            newE.setEnrollmentDate(LocalDate.now());
+            newE.setGrade(new BigDecimal("95.50"));
+            log.info("Creating Enrollment for Alice in CS101 schedule");
+            return enrollmentRepository.save(newE);
+        });
+        log.info("Using Enrollment ID: {} for student {}", e1.getEnrollmentId(), e1.getStudent().getFirstName());
 
-                // Query for Alice's enrollments BEFORE attempting the duplicate save
-                List<Enrollment> aliceEnrollments = enrollmentRepository.findByStudent_StudentId(managedS1_enroll.getStudentId());
-                log.info("Alice's enrollments (before duplicate attempt):");
-                if (aliceEnrollments != null) {
-                    aliceEnrollments.forEach(enrollment -> log.info("Enrolled in: " + enrollment.getSchedule().getCourse().getCourseName()));
-                }
+        List<Enrollment> aliceEnrollments = enrollmentRepository.findByStudent_StudentId(s1.getStudentId());
+        log.info("Alice's enrollments:");
+        aliceEnrollments.forEach(enrollment -> log.info("Enrolled in: {}", enrollment.getSchedule().getCourse().getCourseName()));
 
-
-            } else {
-                log.error("Could not find managed Student S1 or Schedule SCH1 for enrollment test.");
-            }
-
-        } else {
-            String c1Err = managedC1_schedule == null ? "Classroom C101 not found. " : "";
-            String p1Err = managedP1_schedule == null ? "Professor john.doe@example.com not found. " : "";
-            String cs101Err = managedCourseCS101_schedule == null ? "Course CS101 not found. " : "";
-            log.error("Could not find managed entities for schedule test: " + c1Err + p1Err + cs101Err);
-        }
-
-
-        log.info("---- DATABASE TESTS FINISHED ----");
+        log.info("---- DATABASE SETUP/TEST FINISHED ----");
     }
 }
