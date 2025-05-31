@@ -3,6 +3,7 @@ package com.javaproj.db;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "Enrollments", uniqueConstraints = {
@@ -17,10 +18,12 @@ public class Enrollment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id", nullable = false)
+    @JsonBackReference("student-enrollments")
     private Student student;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "schedule_id", nullable = false)
+    @JsonBackReference("schedule-enrollments")
     private Schedule schedule;
 
     @Column(name = "enrollment_date")

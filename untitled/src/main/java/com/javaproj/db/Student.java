@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.Set;
 import java.util.HashSet;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 @Table(name = "Students")
@@ -30,6 +31,7 @@ public class Student {
     private LocalDate enrollmentDate;
 
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference("student-enrollments")
     private Set<Enrollment> enrollments = new HashSet<>();
 
     public Student() {

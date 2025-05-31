@@ -3,6 +3,7 @@ package com.javaproj.db;
 import jakarta.persistence.*;
 import java.util.Set;
 import java.util.HashSet;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 @Table(name = "Professors")
@@ -25,10 +26,11 @@ public class Professor {
     @Column(name = "department", nullable = false, length = 100)
     private String department;
 
-    @Column(name = "office", length = 50) // Was Office
+    @Column(name = "office", length = 50)
     private String office;
 
     @OneToMany(mappedBy = "professor", fetch = FetchType.LAZY)
+    @JsonManagedReference("professor-schedules") // Added
     private Set<Schedule> schedules = new HashSet<>();
 
     public Professor() {

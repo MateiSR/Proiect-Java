@@ -1,8 +1,8 @@
-package com.javaproj.controllers; // Assuming plural 'controllers'
+package com.javaproj.controllers;
 
 import com.javaproj.db.Professor;
-import com.javaproj.services.ProfessorService; // Assuming plural 'services'
-import com.javaproj.exceptions.ResourceNotFoundException; // Assuming plural 'exceptions'
+import com.javaproj.services.ProfessorService;
+import com.javaproj.exceptions.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

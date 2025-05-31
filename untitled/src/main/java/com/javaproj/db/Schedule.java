@@ -4,28 +4,33 @@ import jakarta.persistence.*;
 import java.time.LocalTime;
 import java.util.Set;
 import java.util.HashSet;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
-@Table(name = "Schedule", uniqueConstraints = { // Becomes "schedule"
-        @UniqueConstraint(columnNames = {"room_id", "day_of_week", "semester", "academic_year", "start_time"}, name = "unique_room_time_slot") // Updated column names
+@Table(name = "Schedule", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"room_id", "day_of_week", "semester", "academic_year", "start_time"}, name = "unique_room_time_slot")
 })
 public class Schedule {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "schedule_id") // Changed from ScheduleID
+    @Column(name = "schedule_id")
     private int scheduleId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id", nullable = false) // Changed from CourseID
+    @JoinColumn(name = "course_id", nullable = false)
+    @JsonBackReference("course-schedules")
     private Course course;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "professor_id", nullable = false) // Changed from ProfessorID
+    @JoinColumn(name = "professor_id", nullable = false)
+    @JsonBackReference("professor-schedules")
     private Professor professor;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id", nullable = false)
+    @JsonManagedReference("schedule-classroom")
     private Classroom classroom;
 
     @Column(name = "day_of_week", nullable = false, length = 10)
@@ -44,6 +49,7 @@ public class Schedule {
     private String academicYear;
 
     @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference("schedule-enrollments")
     private Set<Enrollment> enrollments = new HashSet<>();
 
     public Schedule() {

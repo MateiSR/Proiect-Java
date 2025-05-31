@@ -3,9 +3,11 @@ package com.javaproj.db;
 import jakarta.persistence.*;
 import java.util.Set;
 import java.util.HashSet;
-
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Entity
 @Table(name = "Classrooms")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Classroom {
 
     @Id
@@ -26,6 +28,7 @@ public class Classroom {
     private String building;
 
     @OneToMany(mappedBy = "classroom", fetch = FetchType.LAZY)
+    @JsonBackReference("schedule-classroom")
     private Set<Schedule> schedules = new HashSet<>();
 
     public Classroom() {

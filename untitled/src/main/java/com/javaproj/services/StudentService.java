@@ -1,8 +1,8 @@
-package com.javaproj.services; // Plural 'services' to match your error logs
+package com.javaproj.services;
 
 import com.javaproj.db.Student;
 import com.javaproj.db.StudentRepository;
-import com.javaproj.exceptions.ResourceNotFoundException; // Singular 'exception'
+import com.javaproj.exceptions.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
