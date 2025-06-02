@@ -16,19 +16,19 @@ public class Schedule {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "schedule_id")
-    private int scheduleId;
+    private Integer scheduleId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "course_id", nullable = false)
     @JsonBackReference("course-schedules")
     private Course course;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "professor_id", nullable = false)
     @JsonBackReference("professor-schedules")
     private Professor professor;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "room_id", nullable = false)
     @JsonBackReference("schedule-classroom")
     private Classroom classroom;
@@ -55,11 +55,11 @@ public class Schedule {
     public Schedule() {
     }
 
-    public int getScheduleId() {
+    public Integer getScheduleId() {
         return scheduleId;
     }
 
-    public void setScheduleId(int scheduleId) {
+    public void setScheduleId(Integer scheduleId) {
         this.scheduleId = scheduleId;
     }
 
@@ -140,11 +140,11 @@ public class Schedule {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Schedule schedule = (Schedule) o;
-        return scheduleId == schedule.scheduleId;
+        return scheduleId != null && scheduleId.equals(schedule.scheduleId);
     }
 
     @Override
     public int hashCode() {
-        return Integer.hashCode(scheduleId);
+        return scheduleId != null ? scheduleId.hashCode() : 0;
     }
 }

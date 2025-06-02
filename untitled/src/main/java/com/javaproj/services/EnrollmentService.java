@@ -1,6 +1,12 @@
 package com.javaproj.services;
 
 import com.javaproj.db.*;
+import com.javaproj.dto.EnrollmentResponseDTO;
+import com.javaproj.dto.ScheduleResponseDTO;
+import com.javaproj.dto.StudentDTO;
+import com.javaproj.dto.CourseDTO;
+import com.javaproj.dto.ProfessorDTO;
+import com.javaproj.dto.ClassroomDTO;
 import com.javaproj.exceptions.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -10,6 +16,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class EnrollmentService {
@@ -30,6 +37,7 @@ public class EnrollmentService {
         this.courseRepository = courseRepository;
     }
 
+    // Existing EnrollmentRequest static class
     public static class EnrollmentRequest {
         public Integer studentId;
         public Integer scheduleId;
@@ -48,9 +56,59 @@ public class EnrollmentService {
         public void setGrade(BigDecimal grade) { this.grade = grade; }
     }
 
+    private ScheduleResponseDTO convertScheduleToDTO(Schedule schedule) {
+        if (schedule == null) return null;
+        Course course = schedule.getCourse();
+        Professor professor = schedule.getProfessor();
+        Classroom classroom = schedule.getClassroom();
+
+        CourseDTO courseDTO = (course != null)
+                ? new CourseDTO(course.getCourseId(), course.getCourseCode(), course.getCourseName())
+                : null;
+        ProfessorDTO professorDTO = (professor != null)
+                ? new ProfessorDTO(professor.getProfessorId(), professor.getFirstName(), professor.getLastName())
+                : null;
+        ClassroomDTO classroomDTO = (classroom != null)
+                ? new ClassroomDTO(classroom.getRoomId(), classroom.getRoomNumber(), classroom.getCapacity())
+                : null;
+
+        return new ScheduleResponseDTO(
+                schedule.getScheduleId(), courseDTO, professorDTO, classroomDTO,
+                schedule.getDayOfWeek(), schedule.getStartTime(), schedule.getEndTime(),
+                schedule.getSemester(), schedule.getAcademicYear()
+        );
+    }
+
+
+    private EnrollmentResponseDTO convertToDTO(Enrollment enrollment) {
+        if (enrollment == null) {
+            return null;
+        }
+        Student student = enrollment.getStudent();
+        Schedule schedule = enrollment.getSchedule();
+
+        StudentDTO studentDTO = (student != null)
+                ? new StudentDTO(student.getStudentId(), student.getFirstName(), student.getLastName(),
+                student.getEmail(), student.getMajor(), student.getEnrollmentDate())
+                : null;
+
+        ScheduleResponseDTO scheduleResponseDTO = convertScheduleToDTO(schedule);
+
+        return new EnrollmentResponseDTO(
+                enrollment.getEnrollmentId(),
+                studentDTO,
+                scheduleResponseDTO,
+                enrollment.getEnrollmentDate(),
+                enrollment.getGrade()
+        );
+    }
+
+    private List<EnrollmentResponseDTO> convertToDTOList(List<Enrollment> enrollments) {
+        return enrollments.stream().map(this::convertToDTO).collect(Collectors.toList());
+    }
 
     @Transactional
-    public Enrollment createEnrollment(EnrollmentRequest enrollmentRequest) {
+    public EnrollmentResponseDTO createEnrollment(EnrollmentRequest enrollmentRequest) {
         Student student = studentRepository.findById(enrollmentRequest.studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + enrollmentRequest.studentId));
         Schedule schedule = scheduleRepository.findById(enrollmentRequest.scheduleId)
@@ -68,44 +126,46 @@ public class EnrollmentService {
         enrollment.setEnrollmentDate(enrollmentRequest.enrollmentDate != null ? enrollmentRequest.enrollmentDate : LocalDate.now());
         enrollment.setGrade(enrollmentRequest.grade);
 
-        return enrollmentRepository.save(enrollment);
+        Enrollment savedEnrollment = enrollmentRepository.save(enrollment);
+        return convertToDTO(savedEnrollment);
     }
 
     @Transactional(readOnly = true)
-    public List<Enrollment> getAllEnrollments() {
-        return enrollmentRepository.findAll();
+    public List<EnrollmentResponseDTO> getAllEnrollments() {
+        return convertToDTOList(enrollmentRepository.findAll());
     }
 
     @Transactional(readOnly = true)
-    public Optional<Enrollment> getEnrollmentById(Integer enrollmentId) {
-        return enrollmentRepository.findById(enrollmentId);
+    public Optional<EnrollmentResponseDTO> getEnrollmentById(Integer enrollmentId) {
+        return enrollmentRepository.findById(enrollmentId).map(this::convertToDTO);
     }
 
     @Transactional(readOnly = true)
-    public List<Enrollment> getEnrollmentsByStudentId(Integer studentId) {
-        studentRepository.findById(studentId)
+    public List<EnrollmentResponseDTO> getEnrollmentsByStudentId(Integer studentId) {
+        studentRepository.findById(studentId) // Check if student exists
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + studentId));
-        return enrollmentRepository.findByStudent_StudentId(studentId);
+        return convertToDTOList(enrollmentRepository.findByStudent_StudentId(studentId));
     }
 
     @Transactional(readOnly = true)
-    public List<Enrollment> getEnrollmentsByScheduleId(Integer scheduleId) {
-        scheduleRepository.findById(scheduleId)
+    public List<EnrollmentResponseDTO> getEnrollmentsByScheduleId(Integer scheduleId) {
+        scheduleRepository.findById(scheduleId) // Check if schedule exists
                 .orElseThrow(() -> new ResourceNotFoundException("Schedule not found with id: " + scheduleId));
-        return enrollmentRepository.findBySchedule_ScheduleId(scheduleId);
+        return convertToDTOList(enrollmentRepository.findBySchedule_ScheduleId(scheduleId));
     }
 
     @Transactional(readOnly = true)
-    public Optional<Enrollment> getEnrollmentByStudentIdAndScheduleId(Integer studentId, Integer scheduleId) {
+    public Optional<EnrollmentResponseDTO> getEnrollmentByStudentIdAndScheduleId(Integer studentId, Integer scheduleId) {
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + studentId));
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Schedule not found with id: " + scheduleId));
-        return enrollmentRepository.findByStudentAndSchedule(student, schedule);
+        return enrollmentRepository.findByStudentAndSchedule(student, schedule).map(this::convertToDTO);
     }
 
+
     @Transactional
-    public Enrollment updateEnrollment(Integer enrollmentId, EnrollmentRequest enrollmentDetails) {
+    public EnrollmentResponseDTO updateEnrollment(Integer enrollmentId, EnrollmentRequest enrollmentDetails) {
         Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Enrollment not found with id: " + enrollmentId));
 
@@ -119,9 +179,10 @@ public class EnrollmentService {
         if (enrollmentDetails.enrollmentDate != null) {
             enrollment.setEnrollmentDate(enrollmentDetails.enrollmentDate);
         }
-        enrollment.setGrade(enrollmentDetails.grade);
+        enrollment.setGrade(enrollmentDetails.grade); // Allows setting grade to null
 
-        return enrollmentRepository.save(enrollment);
+        Enrollment updatedEnrollment = enrollmentRepository.save(enrollment);
+        return convertToDTO(updatedEnrollment);
     }
 
     @Transactional
@@ -132,9 +193,9 @@ public class EnrollmentService {
     }
 
     @Transactional(readOnly=true)
-    public List<Enrollment> getEnrollmentsByStudentIdAndCourseId(Integer studentId, Integer courseId) {
+    public List<EnrollmentResponseDTO> getEnrollmentsByStudentIdAndCourseId(Integer studentId, Integer courseId) {
         studentRepository.findById(studentId).orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + studentId));
         courseRepository.findById(courseId).orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
-        return enrollmentRepository.findByStudentIdAndCourseId(studentId, courseId);
+        return convertToDTOList(enrollmentRepository.findByStudentIdAndCourseId(studentId, courseId));
     }
 }
