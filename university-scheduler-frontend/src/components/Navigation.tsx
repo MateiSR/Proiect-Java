@@ -7,6 +7,10 @@ const Navigation: React.FC = () => {
       <Link href="/">Home</Link>
       <Link href="/students">Students</Link>
       <Link href="/professors">Professors</Link>
+      <Link href="/classrooms">Classrooms</Link>
+      <Link href="/courses">Courses</Link>
+      <Link href="/schedules">Schedules</Link>
+      <Link href="/enrollments">Enrollments</Link>
     </nav>
   )
 }
