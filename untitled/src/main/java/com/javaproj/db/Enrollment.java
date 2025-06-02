@@ -16,12 +16,12 @@ public class Enrollment {
     @Column(name = "enrollment_id")
     private int enrollmentId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "student_id", nullable = false)
     @JsonBackReference("student-enrollments")
     private Student student;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "schedule_id", nullable = false)
     @JsonBackReference("schedule-enrollments")
     private Schedule schedule;

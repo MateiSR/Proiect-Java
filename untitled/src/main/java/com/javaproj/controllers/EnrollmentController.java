@@ -1,6 +1,6 @@
 package com.javaproj.controllers;
 
-import com.javaproj.db.Enrollment;
+import com.javaproj.dto.EnrollmentResponseDTO;
 import com.javaproj.services.EnrollmentService;
 import com.javaproj.exceptions.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/enrollments")
@@ -25,14 +26,14 @@ public class EnrollmentController {
     @PostMapping
     public ResponseEntity<?> createEnrollment(@RequestBody EnrollmentService.EnrollmentRequest enrollmentRequest) {
         try {
-            Enrollment createdEnrollment = enrollmentService.createEnrollment(enrollmentRequest);
+            EnrollmentResponseDTO createdEnrollment = enrollmentService.createEnrollment(enrollmentRequest);
             return new ResponseEntity<>(createdEnrollment, HttpStatus.CREATED);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (IllegalStateException e) {
+        } catch (IllegalStateException e) { // Handles student already enrolled
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         } catch (DataIntegrityViolationException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Database constraint violation (e.g., unique student-schedule): " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Database constraint violation: " + e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + e.getMessage());
         }
@@ -42,9 +43,9 @@ public class EnrollmentController {
     public ResponseEntity<?> getAllEnrollments(
             @RequestParam(required = false) Integer studentId,
             @RequestParam(required = false) Integer scheduleId,
-            @RequestParam(required = false) Integer courseId
+            @RequestParam(required = false) Integer courseId // For student enrollments in a specific course
     ) {
-        List<Enrollment> enrollments;
+        List<EnrollmentResponseDTO> enrollments;
         try {
             if (studentId != null && courseId != null) {
                 enrollments = enrollmentService.getEnrollmentsByStudentIdAndCourseId(studentId, courseId);
@@ -62,9 +63,9 @@ public class EnrollmentController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Enrollment> getEnrollmentById(@PathVariable Integer id) {
-        return enrollmentService.getEnrollmentById(id)
-                .map(ResponseEntity::ok)
+    public ResponseEntity<EnrollmentResponseDTO> getEnrollmentById(@PathVariable Integer id) {
+        Optional<EnrollmentResponseDTO> enrollmentDTO = enrollmentService.getEnrollmentById(id);
+        return enrollmentDTO.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -73,23 +74,22 @@ public class EnrollmentController {
             @PathVariable Integer studentId,
             @PathVariable Integer scheduleId) {
         try {
-            return enrollmentService.getEnrollmentByStudentIdAndScheduleId(studentId, scheduleId)
-                    .map(ResponseEntity::ok)
+            Optional<EnrollmentResponseDTO> enrollmentDTO = enrollmentService.getEnrollmentByStudentIdAndScheduleId(studentId, scheduleId);
+            return enrollmentDTO.map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
 
-
     @PutMapping("/{id}")
     public ResponseEntity<?> updateEnrollment(@PathVariable Integer id, @RequestBody EnrollmentService.EnrollmentRequest enrollmentDetails) {
         try {
-            Enrollment updatedEnrollment = enrollmentService.updateEnrollment(id, enrollmentDetails);
+            EnrollmentResponseDTO updatedEnrollment = enrollmentService.updateEnrollment(id, enrollmentDetails);
             return ResponseEntity.ok(updatedEnrollment);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) { // For business rule violations like cannot change student/schedule
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + e.getMessage());

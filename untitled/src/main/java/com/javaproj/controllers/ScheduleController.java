@@ -1,8 +1,10 @@
 package com.javaproj.controllers;
 
-import com.javaproj.db.Schedule;
+import com.javaproj.dto.ScheduleGenerationRequest;
 import com.javaproj.services.ScheduleService;
+import com.javaproj.dto.ScheduleResponseDTO;
 import com.javaproj.exceptions.ResourceNotFoundException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalTime;
 import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/v1/schedules")
@@ -27,25 +30,25 @@ public class ScheduleController {
     @PostMapping
     public ResponseEntity<?> createSchedule(@RequestBody ScheduleService.ScheduleRequest scheduleRequest) {
         try {
-            Schedule createdSchedule = scheduleService.createSchedule(scheduleRequest);
+            ScheduleResponseDTO createdSchedule = scheduleService.createSchedule(scheduleRequest); // Returns DTO
             return new ResponseEntity<>(createdSchedule, HttpStatus.CREATED);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (IllegalStateException | IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         } catch (DataIntegrityViolationException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Database constraint violation (e.g., unique room-time slot): " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Database constraint violation: " + e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + e.getMessage());
         }
     }
 
     @GetMapping
-    public ResponseEntity<List<Schedule>> getAllSchedules(
-            @RequestParam(required = false) Integer courseId,
-            @RequestParam(required = false) Integer professorId,
-            @RequestParam(required = false) Integer classroomId) {
-        List<Schedule> schedules;
+    public ResponseEntity<List<ScheduleResponseDTO>> getAllSchedules( // list of dtos
+                                                                      @RequestParam(required = false) Integer courseId,
+                                                                      @RequestParam(required = false) Integer professorId,
+                                                                      @RequestParam(required = false) Integer classroomId) {
+        List<ScheduleResponseDTO> schedules;
         try {
             if (courseId != null) {
                 schedules = scheduleService.getSchedulesByCourseId(courseId);
@@ -63,7 +66,7 @@ public class ScheduleController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Schedule> getScheduleById(@PathVariable Integer id) {
+    public ResponseEntity<ScheduleResponseDTO> getScheduleById(@PathVariable Integer id) { // Return DTO
         return scheduleService.getScheduleById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -78,7 +81,7 @@ public class ScheduleController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime startTime,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime endTime) {
         try {
-            List<Schedule> conflicts = scheduleService.findRoomConflicts(roomId, dayOfWeek, semester, academicYear, startTime, endTime);
+            List<com.javaproj.db.Schedule> conflicts = scheduleService.findRoomConflicts(roomId, dayOfWeek, semester, academicYear, startTime, endTime);
             return ResponseEntity.ok(conflicts);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
@@ -94,7 +97,7 @@ public class ScheduleController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime startTime,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime endTime) {
         try {
-            List<Schedule> conflicts = scheduleService.findProfessorConflicts(professorId, dayOfWeek, semester, academicYear, startTime, endTime);
+            List<com.javaproj.db.Schedule> conflicts = scheduleService.findProfessorConflicts(professorId, dayOfWeek, semester, academicYear, startTime, endTime);
             return ResponseEntity.ok(conflicts);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
@@ -105,14 +108,14 @@ public class ScheduleController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateSchedule(@PathVariable Integer id, @RequestBody ScheduleService.ScheduleRequest scheduleRequestDetails) {
         try {
-            Schedule updatedSchedule = scheduleService.updateSchedule(id, scheduleRequestDetails);
+            ScheduleResponseDTO updatedSchedule = scheduleService.updateSchedule(id, scheduleRequestDetails); // Returns DTO
             return ResponseEntity.ok(updatedSchedule);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (IllegalStateException | IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         } catch (DataIntegrityViolationException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Database constraint violation (e.g., unique room-time slot): " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Database constraint violation: " + e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + e.getMessage());
         }
@@ -127,6 +130,22 @@ public class ScheduleController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (DataIntegrityViolationException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Cannot delete schedule due to existing references. " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/generate-automatic")
+    public ResponseEntity<?> generateAutomaticSchedule(@RequestBody ScheduleGenerationRequest request) {
+        try {
+            List<ScheduleResponseDTO> generatedSchedules = scheduleService.generateAutomaticSchedule(request);
+            if (generatedSchedules.isEmpty() && !request.getCourseIds().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body("Could not schedule any of the requested courses with the given constraints.");
+            }
+            return ResponseEntity.ok(generatedSchedules);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred during schedule generation: " + e.getMessage());
         }
     }
 }

@@ -10,6 +10,7 @@ const Navigation: React.FC = () => {
       <Link href="/classrooms">Classrooms</Link>
       <Link href="/courses">Courses</Link>
       <Link href="/schedules">Schedules</Link>
+      <Link href="/schedules/generate">Generate Schedule</Link>{" "}
       <Link href="/enrollments">Enrollments</Link>
     </nav>
   )
